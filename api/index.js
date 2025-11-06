@@ -3,7 +3,7 @@ import cors from 'cors';
 import 'dotenv/config';
 
 // Importar o inicializador do banco
-import { pool, initializeDatabase } from './db.js';
+import { pool, initializeDatabase } from './db/db.js';
 
 // Importar Roteadores da pasta /routes
 import personRoutes from './routes/pessoa.js';

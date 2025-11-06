@@ -2,11 +2,11 @@
   "name": "curriculo-api",
   "version": "1.0.0",
   "description": "API REST para um app de currículo com Express e PostgreSQL",
-  "main": "index.js",
+  "main": "api/index.js",
   "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js"
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
