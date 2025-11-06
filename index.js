@@ -30,14 +30,14 @@ app.use(express.json());
 })();
 
 // === Registrar os Roteadores ===
-// Todo o tráfego para /api será tratado pelos roteadores
-app.use('/api', personRoutes);
-app.use('/api', experienceRoutes);
-app.use('/api', educationRoutes);
-app.use('/api', skillRoutes);
+// O 'vercel.json' já cuida do /api, então o Express deve escutar na raiz /
+app.use('/', personRoutes);
+app.use('/', experienceRoutes);
+app.use('/', educationRoutes);
+app.use('/', skillRoutes);
 
 // Rota "health check"
-app.get('/api', (req, res) => {
+app.get('/', (req, res) => {
   res.status(200).json({ message: 'API de Currículos está no ar!' });
 });
 
