@@ -1,9 +1,14 @@
+// Coloque este arquivo em: /api/routes.js
+
 import { Router } from 'express';
-import { pool } from './db/db.js';
+// 1. CORREÇÃO: Importar o DB (voltando uma pasta, de /api para /db)
+import { pool } from '../db/db.js'; 
 
 const router = Router();
 
-// CREATE (Criar Pessoa)
+// ===================================
+// CRUD - PERSON (Pessoa/Currículo)
+// ===================================
 router.post('/person', async (req, res) => {
   const { name, email, phone, linkedin_url, github_url, summary } = req.body;
   try {
@@ -19,7 +24,6 @@ router.post('/person', async (req, res) => {
   }
 });
 
-// READ (Listar todas as Pessoas)
 router.get('/person', async (req, res) => {
   try {
     const { rows } = await pool.query('SELECT * FROM person ORDER BY name');
@@ -29,7 +33,6 @@ router.get('/person', async (req, res) => {
   }
 });
 
-// READ (Obter uma Pessoa por ID)
 router.get('/person/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -43,7 +46,6 @@ router.get('/person/:id', async (req, res) => {
   }
 });
 
-// UPDATE (Atualizar Pessoa)
 router.put('/person/:id', async (req, res) => {
   const { id } = req.params;
   const { name, email, phone, linkedin_url, github_url, summary } = req.body;
@@ -64,7 +66,6 @@ router.put('/person/:id', async (req, res) => {
   }
 });
 
-// DELETE (Deletar Pessoa)
 router.delete('/person/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -78,7 +79,9 @@ router.delete('/person/:id', async (req, res) => {
   }
 });
 
-// Currículo Completo
+// ===================================
+// ROTA ESPECIAL: Currículo Completo
+// ===================================
 router.get('/person/:id/full', async (req, res) => {
   const { id } = req.params;
   try {
@@ -94,21 +97,21 @@ router.get('/person/:id/full', async (req, res) => {
     if (person.rows.length === 0) {
       return res.status(404).json({ error: 'Pessoa não encontrada.' });
     }
-
     const fullResume = {
       ...person.rows[0],
       experiences: experiences.rows,
       educations: educations.rows,
       skills: skills.rows
     };
-
     res.status(200).json(fullResume);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// CREATE (Adicionar Experiência para uma Pessoa)
+// ===================================
+// CRUD - EXPERIENCE (Experiência)
+// ===================================
 router.post('/person/:person_id/experience', async (req, res) => {
   const { person_id } = req.params;
   const { job_title, company, start_date, end_date, description } = req.body;
@@ -125,7 +128,6 @@ router.post('/person/:person_id/experience', async (req, res) => {
   }
 });
 
-// READ (Listar todas as Experiências de uma Pessoa)
 router.get('/person/:person_id/experience', async (req, res) => {
   const { person_id } = req.params;
   try {
@@ -136,7 +138,6 @@ router.get('/person/:person_id/experience', async (req, res) => {
   }
 });
 
-// UPDATE (Atualizar uma Experiência específica)
 router.put('/experience/:id', async (req, res) => {
   const { id } = req.params;
   const { job_title, company, start_date, end_date, description } = req.body;
@@ -157,7 +158,6 @@ router.put('/experience/:id', async (req, res) => {
   }
 });
 
-// DELETE (Deletar uma Experiência específica)
 router.delete('/experience/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -171,7 +171,9 @@ router.delete('/experience/:id', async (req, res) => {
   }
 });
 
-// CREATE (Adicionar Educação para uma Pessoa)
+// ===================================
+// CRUD - EDUCATION (Educação)
+// ===================================
 router.post('/person/:person_id/education', async (req, res) => {
   const { person_id } = req.params;
   const { institution, degree, field_of_study, start_date, end_date } = req.body;
@@ -188,7 +190,6 @@ router.post('/person/:person_id/education', async (req, res) => {
   }
 });
 
-// READ (Listar todas as Educations de uma Pessoa)
 router.get('/person/:person_id/education', async (req, res) => {
   const { person_id } = req.params;
   try {
@@ -199,7 +200,6 @@ router.get('/person/:person_id/education', async (req, res) => {
   }
 });
 
-// UPDATE (Atualizar uma Educação específica)
 router.put('/education/:id', async (req, res) => {
   const { id } = req.params;
   const { institution, degree, field_of_study, start_date, end_date } = req.body;
@@ -220,7 +220,6 @@ router.put('/education/:id', async (req, res) => {
   }
 });
 
-// DELETE (Deletar uma Educação específica)
 router.delete('/education/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -234,7 +233,9 @@ router.delete('/education/:id', async (req, res) => {
   }
 });
 
-// CREATE (Adicionar Habilidade para uma Pessoa)
+// ===================================
+// CRUD - SKILL (Habilidade)
+// ===================================
 router.post('/person/:person_id/skill', async (req, res) => {
   const { person_id } = req.params;
   const { skill_name, level } = req.body;
@@ -251,7 +252,6 @@ router.post('/person/:person_id/skill', async (req, res) => {
   }
 });
 
-// READ (Listar todas as Skills de uma Pessoa)
 router.get('/person/:person_id/skill', async (req, res) => {
   const { person_id } = req.params;
   try {
@@ -262,7 +262,6 @@ router.get('/person/:person_id/skill', async (req, res) => {
   }
 });
 
-// UPDATE (Atualizar uma Habilidade específica)
 router.put('/skill/:id', async (req, res) => {
   const { id } = req.params;
   const { skill_name, level } = req.body;
@@ -280,7 +279,6 @@ router.put('/skill/:id', async (req, res) => {
   }
 });
 
-// DELETE (Deletar uma Habilidade específica)
 router.delete('/skill/:id', async (req, res) => {
   const { id } = req.params;
   try {
