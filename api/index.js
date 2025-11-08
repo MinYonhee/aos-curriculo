@@ -4,8 +4,7 @@ import express from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 
-// 1. Importar o DB (voltando uma pasta, de /api para /db)
-import { pool, initializeDatabase } from '../db/db.js';
+import { pool, initializeDatabase } from './db/db.js';
 
 // 2. Importar o ROTEADOR ÚNICO (da mesma pasta)
 import allRoutes from './routes/routes.js';

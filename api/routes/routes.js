@@ -2,7 +2,7 @@
 
 import { Router } from 'express';
 // 1. CORREÇÃO: Importar o DB (voltando uma pasta, de /api para /db)
-import { pool } from '../db/db.js'; 
+import { pool } from './db/db.js'; 
 
 const router = Router();
 
