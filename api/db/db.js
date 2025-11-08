@@ -1,14 +1,10 @@
 import { Pool } from 'pg';
 import 'dotenv/config';
 
-// O Neon (assim como a Vercel) fornece uma POSTGRES_URL.
-// O 'pg' module sabe como usar essa string.
-// Esta configuração é para o Neon (sem objeto SSL).
 const pool = new Pool({
   connectionString: process.env.POSTGRES_URL,
 });
 
-// Função para criar as tabelas se elas não existirem
 const createTables = async () => {
   const queries = [
     `CREATE TABLE IF NOT EXISTS person (
@@ -56,10 +52,8 @@ const createTables = async () => {
   }
 };
 
-// Função para popular o banco com os dois currículos (OBS 1)
 const seedDatabase = async () => {
   try {
-    // 1. Verifica se já existem pessoas no banco
     const { rows } = await pool.query('SELECT COUNT(*) FROM person');
     const count = parseInt(rows[0].count, 10);
 
@@ -145,7 +139,6 @@ const seedDatabase = async () => {
   }
 };
 
-// Função de inicialização que chama a criação e o seed
 const initializeDatabase = async () => {
   try {
     await createTables();

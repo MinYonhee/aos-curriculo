@@ -1,11 +1,7 @@
 import { Router } from 'express';
-import { pool } from '../db/db.js';
+import { pool } from './db/db.js';
 
 const router = Router();
-
-// ===================================
-// CRUD - PERSON (Pessoa/Currículo)
-// ===================================
 
 // CREATE (Criar Pessoa)
 router.post('/person', async (req, res) => {
@@ -82,21 +78,15 @@ router.delete('/person/:id', async (req, res) => {
   }
 });
 
-// ===================================
-// ROTA ESPECIAL: Currículo Completo
-// ===================================
+// Currículo Completo
 router.get('/person/:id/full', async (req, res) => {
   const { id } = req.params;
   try {
-    // 1. Obter dados da pessoa
     const personRes = pool.query('SELECT * FROM person WHERE id = $1', [id]);
-    
-    // 2. Obter dados relacionados (em paralelo)
     const expRes = pool.query('SELECT * FROM experience WHERE person_id = $1 ORDER BY start_date DESC', [id]);
     const eduRes = pool.query('SELECT * FROM education WHERE person_id = $1 ORDER BY end_date DESC', [id]);
     const skillRes = pool.query('SELECT * FROM skill WHERE person_id = $1 ORDER BY skill_name', [id]);
 
-    // 3. Aguardar todas as consultas
     const [person, experiences, educations, skills] = await Promise.all([
       personRes, expRes, eduRes, skillRes
     ]);
@@ -105,7 +95,6 @@ router.get('/person/:id/full', async (req, res) => {
       return res.status(404).json({ error: 'Pessoa não encontrada.' });
     }
 
-    // 4. Montar o objeto de resposta
     const fullResume = {
       ...person.rows[0],
       experiences: experiences.rows,
@@ -118,11 +107,6 @@ router.get('/person/:id/full', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-// ===================================
-// ROTAS FILHAS (dependentes de person_id)
-// ===================================
 
 // CREATE (Adicionar Experiência para uma Pessoa)
 router.post('/person/:person_id/experience', async (req, res) => {
@@ -145,14 +129,49 @@ router.post('/person/:person_id/experience', async (req, res) => {
 router.get('/person/:person_id/experience', async (req, res) => {
   const { person_id } = req.params;
   try {
-    const { rows } = await pool.query('SELECT * FROM experience WHERE person_id = $1', [person_id]);
+    const { rows } = await pool.query('SELECT * FROM experience WHERE person_id = $1 ORDER BY start_date DESC', [person_id]);
     res.status(200).json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 });
 
-// CREATE (Education)
+// UPDATE (Atualizar uma Experiência específica)
+router.put('/experience/:id', async (req, res) => {
+  const { id } = req.params;
+  const { job_title, company, start_date, end_date, description } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE experience
+       SET job_title = $1, company = $2, start_date = $3, end_date = $4, description = $5
+       WHERE id = $6
+       RETURNING *`,
+      [job_title, company, start_date, end_date, description, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Experiência não encontrada.' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE (Deletar uma Experiência específica)
+router.delete('/experience/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM experience WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Experiência não encontrada.' });
+    }
+    res.status(200).json({ message: 'Experiência deletada com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CREATE (Adicionar Educação para uma Pessoa)
 router.post('/person/:person_id/education', async (req, res) => {
   const { person_id } = req.params;
   const { institution, degree, field_of_study, start_date, end_date } = req.body;
@@ -169,7 +188,53 @@ router.post('/person/:person_id/education', async (req, res) => {
   }
 });
 
-// CREATE (Skill)
+// READ (Listar todas as Educations de uma Pessoa)
+router.get('/person/:person_id/education', async (req, res) => {
+  const { person_id } = req.params;
+  try {
+    const { rows } = await pool.query('SELECT * FROM education WHERE person_id = $1 ORDER BY end_date DESC', [person_id]);
+    res.status(200).json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE (Atualizar uma Educação específica)
+router.put('/education/:id', async (req, res) => {
+  const { id } = req.params;
+  const { institution, degree, field_of_study, start_date, end_date } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE education
+       SET institution = $1, degree = $2, field_of_study = $3, start_date = $4, end_date = $5
+       WHERE id = $6
+       RETURNING *`,
+      [institution, degree, field_of_study, start_date, end_date, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Educação não encontrada.' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE (Deletar uma Educação específica)
+router.delete('/education/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM education WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Educação não encontrada.' });
+    }
+    res.status(200).json({ message: 'Educação deletada com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// CREATE (Adicionar Habilidade para uma Pessoa)
 router.post('/person/:person_id/skill', async (req, res) => {
   const { person_id } = req.params;
   const { skill_name, level } = req.body;
@@ -186,5 +251,47 @@ router.post('/person/:person_id/skill', async (req, res) => {
   }
 });
 
+// READ (Listar todas as Skills de uma Pessoa)
+router.get('/person/:person_id/skill', async (req, res) => {
+  const { person_id } = req.params;
+  try {
+    const { rows } = await pool.query('SELECT * FROM skill WHERE person_id = $1 ORDER BY skill_name', [person_id]);
+    res.status(200).json(rows);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// UPDATE (Atualizar uma Habilidade específica)
+router.put('/skill/:id', async (req, res) => {
+  const { id } = req.params;
+  const { skill_name, level } = req.body;
+  try {
+    const { rows } = await pool.query(
+      `UPDATE skill SET skill_name = $1, level = $2 WHERE id = $3 RETURNING *`,
+      [skill_name, level, id]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Habilidade não encontrada.' });
+    }
+    res.status(200).json(rows[0]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE (Deletar uma Habilidade específica)
+router.delete('/skill/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rowCount } = await pool.query('DELETE FROM skill WHERE id = $1', [id]);
+    if (rowCount === 0) {
+      return res.status(404).json({ error: 'Habilidade não encontrada.' });
+    }
+    res.status(200).json({ message: 'Habilidade deletada com sucesso.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 export default router;
